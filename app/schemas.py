@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import date
 
 class ExpenseCreate(BaseModel):
@@ -10,5 +10,10 @@ class ExpenseCreate(BaseModel):
 
 class ExpenseUpdate(ExpenseCreate):
     pass
+class ExpenseResponse(ExpenseCreate):
+    id: int
+    pass
+    model_config = ConfigDict(from_attributes=True)
+
 
 

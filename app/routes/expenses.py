@@ -1,5 +1,4 @@
-from http.client import HTTPException
-from os import name
+from fastapi import HTTPException
 from typing import Optional
 
 from fastapi import APIRouter, Depends
@@ -7,11 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Expense
-from app.schemas import ExpenseCreate, ExpenseUpdate
+from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
 router = APIRouter()
 
-@router.post("/expenses")
+@router.post("/expenses",response_model=ExpenseResponse)
 def create_expense(
         expense: ExpenseCreate,
         db: Session = Depends(get_db)
@@ -28,14 +27,14 @@ def create_expense(
     db.commit()
     db.refresh(new_expense)
     return new_expense
-@router.get("/expenses")
+@router.get("/expenses",response_model=list[ExpenseResponse])
 def read_expenses(name: Optional[str] = None,db: Session = Depends(get_db)):
     query=db.query(Expense)
     if name is not None:
         query = query.filter(Expense.name.ilike(f"%{name}%"))
     expenses = query.all()
     return expenses
-@router.post("/expenses/{expense_id}")
+@router.get("/expenses/{expense_id}",response_model=ExpenseResponse)
 def read_expense(expense_id: int, db: Session = Depends(get_db)):
     expense = db.query(Expense).filter(Expense.id == expense_id).first()
     if expense is None:
@@ -43,18 +42,7 @@ def read_expense(expense_id: int, db: Session = Depends(get_db)):
     else:
         return expense
 
-@router.delete("/expenses/{expense_id}")
-def delete_expense(expense_id: int, db: Session = Depends(get_db)):
-        expense = db.query(Expense).filter(Expense.id == expense_id).first()
-        if expense is not None:
-            db.delete(expense)
-            db.commit()
-            db.refresh(expense)
-        else:
-            raise HTTPException(status_code=404, detail="ID not found")
-
-
-@router.put("/expenses/{expense_id}")
+@router.put("/expenses/{expense_id}",response_model=ExpenseResponse)
 def update_expense(expense_id: int,expense_data: ExpenseUpdate,db: Session = Depends(get_db)):
         expense = (db.query(Expense).filter(Expense.id == expense_id).first())
         if not expense:
