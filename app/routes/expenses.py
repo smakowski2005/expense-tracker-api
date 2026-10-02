@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from typing import Optional
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -29,7 +30,7 @@ def create_expense(
     return new_expense
 @router.get("/expenses",response_model=list[ExpenseResponse])
 def read_expenses(name: Optional[str] = None, category: Optional[str] = None,skip: int = 0,limit: int = 100,db: Session = Depends(get_db)):
-    query=db.query(Expense)
+    query=db.query(Expense).order_by(Expense.date.desc())
     if name:
         query = query.filter(Expense.name.ilike(f"%{name}%"))
     if category:
