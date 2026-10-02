@@ -28,11 +28,13 @@ def create_expense(
     db.refresh(new_expense)
     return new_expense
 @router.get("/expenses",response_model=list[ExpenseResponse])
-def read_expenses(name: Optional[str] = None,db: Session = Depends(get_db)):
+def read_expenses(name: Optional[str] = None, category: Optional[str] = None,skip: int = 0,limit: int = 100,db: Session = Depends(get_db)):
     query=db.query(Expense)
-    if name is not None:
+    if name:
         query = query.filter(Expense.name.ilike(f"%{name}%"))
-    expenses = query.all()
+    if category:
+        query = query.filter(Expense.category == category)
+    expenses = query.offset(skip).limit(limit).all()
     return expenses
 @router.get("/expenses/{expense_id}",response_model=ExpenseResponse)
 def read_expense(expense_id: int, db: Session = Depends(get_db)):
