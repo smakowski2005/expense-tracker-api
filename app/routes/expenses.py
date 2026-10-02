@@ -67,3 +67,11 @@ def update_expense(expense_id: int,expense_data: ExpenseUpdate,db: Session = Dep
         db.commit()
         db.refresh(expense)
         return expense
+@router.delete("/expenses/{expense_id}")
+def delete_expense(expense_id: int, db: Session = Depends(get_db)):
+    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="ID not found")
+    db.delete(expense)
+    db.commit()
+    return {"message": f"Expense deleted successfully"}
