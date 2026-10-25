@@ -9,12 +9,16 @@ from app.database import get_db
 from app.models import Expense
 from app.schemas import ExpenseCreate, ExpenseUpdate, ExpenseResponse
 
+from app.security import get_current_user
+from app.models import User
+
 router = APIRouter()
 
 @router.post("/expenses",response_model=ExpenseResponse)
 def create_expense(
         expense: ExpenseCreate,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
     new_expense = Expense(
         name=expense.name,
