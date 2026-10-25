@@ -25,7 +25,8 @@ def create_expense(
         amount=expense.amount,
         category=expense.category,
         date=expense.date,
-        description=expense.description
+        description=expense.description,
+        owner_id=current_user.id
     )
 
     db.add(new_expense)
@@ -33,8 +34,9 @@ def create_expense(
     db.refresh(new_expense)
     return new_expense
 @router.get("/expenses",response_model=list[ExpenseResponse])
-def read_expenses(name: Optional[str] = None, category: Optional[str] = None,skip: int = 0,limit: int = 100,db: Session = Depends(get_db)):
+def read_expenses(name: Optional[str] = None, category: Optional[str] = None,skip: int = 0,limit: int = 100,db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     query=db.query(Expense).order_by(Expense.date.desc())
+    query=query.filter(Expense.owner_id == current_user.id)
     if name:
         query = query.filter(Expense.name.ilike(f"%{name}%"))
     if category:
@@ -42,16 +44,18 @@ def read_expenses(name: Optional[str] = None, category: Optional[str] = None,ski
     expenses = query.offset(skip).limit(limit).all()
     return expenses
 @router.get("/expenses/{expense_id}",response_model=ExpenseResponse)
-def read_expense(expense_id: int, db: Session = Depends(get_db)):
-    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+def read_expense(expense_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    query=db.query(Expense).filter(Expense.owner_id == current_user.id)
+    expense = query.filter(Expense.id == expense_id).first()
     if expense is None:
         raise HTTPException(status_code=404, detail="ID not found")
     else:
         return expense
 
 @router.put("/expenses/{expense_id}",response_model=ExpenseResponse)
-def update_expense(expense_id: int,expense_data: ExpenseUpdate,db: Session = Depends(get_db)):
-        expense = (db.query(Expense).filter(Expense.id == expense_id).first())
+def update_expense(expense_id: int,expense_data: ExpenseUpdate,db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+        query = db.query(Expense).filter(Expense.owner_id == current_user.id)
+        expense = query.filter(Expense.id == expense_id).first()
         if not expense:
             raise HTTPException(status_code=404, detail="ID not found")
         expense.name = expense_data.name
@@ -63,8 +67,9 @@ def update_expense(expense_id: int,expense_data: ExpenseUpdate,db: Session = Dep
         db.refresh(expense)
         return expense
 @router.delete("/expenses/{expense_id}")
-def delete_expense(expense_id: int, db: Session = Depends(get_db)):
-    expense = db.query(Expense).filter(Expense.id == expense_id).first()
+def delete_expense(expense_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    query = db.query(Expense).filter(Expense.owner_id == current_user.id)
+    expense = query.filter(Expense.id == expense_id).first()
     if not expense:
         raise HTTPException(status_code=404, detail="ID not found")
     db.delete(expense)
