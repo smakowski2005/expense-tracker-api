@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from datetime import date
 
 class ExpenseCreate(BaseModel):
@@ -14,6 +14,15 @@ class ExpenseResponse(ExpenseCreate):
     id: int
     pass
     model_config = ConfigDict(from_attributes=True)
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    model_config = ConfigDict(from_attributes=True)
+
+
 
 
 

@@ -1,3 +1,5 @@
 .idea/
 .venv/
 expenses.db
+.env
+__pycache__/

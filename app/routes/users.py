@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends,HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.models import User
 from app.schemas import UserCreate,UserResponse
@@ -18,8 +19,12 @@ def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
         hashed_password=hashed_password
     )
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.commit()
+        db.refresh(new_user)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Email already registered")
     return new_user
 @router.post("/token")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),db: Session = Depends(get_db)):
